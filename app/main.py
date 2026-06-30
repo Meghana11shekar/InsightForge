@@ -5,6 +5,7 @@ from app.embeddings.embedder import create_embeddings
 from app.database.vector_store import store_embeddings
 from app.database.vector_store import search
 from app.llm.generator import generate_answer
+from app.agents.planner import PlannerAgent
 
 pdf_path = "data/uploads/sample.pdf"
 
@@ -27,6 +28,12 @@ results = search(question_embedding)
 context = "\n\n".join(results["documents"][0])
 
 answer = generate_answer(question, context)
+
+planner = PlannerAgent()
+
+task = input("What do you want to do?\n")
+
+plan = planner.plan(task)
 
 print("=" * 50)
 print("📄 InsightForge")
@@ -65,3 +72,8 @@ print(question)
 print("\nAnswer:\n")
 
 print(answer)
+
+
+print()
+
+print(plan)
