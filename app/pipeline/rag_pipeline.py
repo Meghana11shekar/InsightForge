@@ -1,10 +1,14 @@
 from app.pdf.parser import extract_text
 from app.rag.chunker import chunk_text
 from app.embeddings.embedder import create_embeddings
-from app.database.vector_store import store_embeddings
-from app.database.vector_store import search
+from app.database.vector_store import (
+    store_embeddings,
+    search,
+    clear_collection,
+)
 from app.llm.generator import generate_answer
-
+from app.llm.summarizer import summarize_document
+from app.llm.keyword_extractor import extract_keywords
 import os
 
 
@@ -27,6 +31,8 @@ class RAGPipeline:
 
         self.embeddings = create_embeddings(self.chunks)
 
+        clear_collection()
+
         store_embeddings(self.chunks, self.embeddings)
 
     def ask(self, question):
@@ -39,4 +45,16 @@ class RAGPipeline:
 
         answer = generate_answer(question, context)
 
-        return answer
+        print(type(answer))
+        print(type(results["documents"][0]))
+        print(results["documents"][0])
+
+        return answer, results["documents"][0]
+
+    def summarize(self):
+
+        return summarize_document(self.text)
+
+    def keywords(self):
+
+        return extract_keywords(self.text)
