@@ -84,30 +84,79 @@ if uploaded_file is not None:
 
             st.warning("Please upload a PDF first.")
 
-    else:
+        else:
 
-        with st.spinner("Generating summary..."):
+            with st.spinner("Generating summary..."):
 
-            summary = st.session_state.pipeline.summarize()
+                summary = st.session_state.pipeline.summarize()
 
         st.subheader("📖 Document Summary")
 
         st.info(summary)
+
     if st.button("🔑 Extract Keywords"):
 
         if st.session_state.pipeline is None:
 
             st.warning("Please upload a PDF first.")
 
-    else:
+        else:
 
-        with st.spinner("Extracting keywords..."):
+            with st.spinner("Extracting keywords..."):
 
-            keywords = st.session_state.pipeline.keywords()
+                keywords = st.session_state.pipeline.keywords()
 
         st.subheader("🔑 Keywords")
 
         st.success(keywords)
+
+    if st.button("📘 Generate Study Notes"):
+
+        if st.session_state.pipeline is None:
+
+            st.warning("Please upload a PDF first.")
+
+        else:
+
+            with st.spinner("Generating study notes..."):
+
+                notes = st.session_state.pipeline.study_notes()
+
+        st.subheader("📘 Study Notes")
+
+        st.markdown(notes)
+
+    if st.button("📚 Generate Literature Review"):
+
+        if st.session_state.pipeline is None:
+
+            st.warning("Please upload a PDF first.")
+
+        else:
+
+            with st.spinner("Generating literature review..."):
+
+                review = st.session_state.pipeline.literature_review()
+
+        st.subheader("📚 Literature Review")
+
+        st.markdown(review)
+
+    if st.button("🔍 Find Research Gaps"):
+
+        if st.session_state.pipeline is None:
+
+            st.warning("Please upload a PDF first.")
+
+        else:
+
+            with st.spinner("Analyzing research gaps..."):
+
+                gaps = st.session_state.pipeline.research_gap()
+
+        st.subheader("🔍 Research Gap Analysis")
+
+        st.markdown(gaps)
 
     # Sidebar Information
 
