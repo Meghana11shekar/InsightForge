@@ -15,6 +15,27 @@ if "pipeline" not in st.session_state:
 if "history" not in st.session_state:
     st.session_state.history = []
 
+if "summary" not in st.session_state:
+    st.session_state.summary = None
+
+if "keywords" not in st.session_state:
+    st.session_state.keywords = None
+
+if "study_notes" not in st.session_state:
+    st.session_state.study_notes = None
+
+if "literature_review" not in st.session_state:
+    st.session_state.literature_review = None
+
+if "research_gap" not in st.session_state:
+    st.session_state.research_gap = None
+
+if "last_answer" not in st.session_state:
+    st.session_state.last_answer = None
+
+if "last_sources" not in st.session_state:
+    st.session_state.last_sources = []
+
 # -------------------------
 # Page Config
 # -------------------------
@@ -59,10 +80,7 @@ uploaded_file = st.file_uploader(
 
 if uploaded_file is not None:
 
-    save_path = os.path.join(
-        "data/uploads",
-        uploaded_file.name
-    )
+    save_path = os.path.join("data/uploads", uploaded_file.name)
 
     with open(save_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
@@ -72,130 +90,163 @@ if uploaded_file is not None:
     with st.spinner("Indexing PDF..."):
 
         pipeline = RAGPipeline()
-
         pipeline.index_pdf(save_path)
 
         st.session_state.pipeline = pipeline
 
+        # Reset workspace
+        st.session_state.summary = None
+        st.session_state.keywords = None
+        st.session_state.study_notes = None
+        st.session_state.literature_review = None
+        st.session_state.research_gap = None
+        st.session_state.last_answer = None
+        st.session_state.last_sources = []
+
     st.success(f"✅ {uploaded_file.name} indexed successfully!")
+
+
+# -------------------------
+# Everything below uses the indexed pipeline
+# -------------------------
+
+if st.session_state.pipeline is not None:
+
+    pipeline = st.session_state.pipeline
+
+    # -------------------------
+    # Summary
+    # -------------------------
+
     if st.button("📝 Summarize Document"):
 
-        if st.session_state.pipeline is None:
+        with st.spinner("Generating summary..."):
+            st.session_state.summary = pipeline.summarize()
 
-            st.warning("Please upload a PDF first.")
-
-        else:
-
-            with st.spinner("Generating summary..."):
-
-                summary = st.session_state.pipeline.summarize()
+    if st.session_state.summary:
 
         st.subheader("📖 Document Summary")
+        st.info(st.session_state.summary)
 
-        st.info(summary)
+    # -------------------------
+    # Keywords
+    # -------------------------
 
     if st.button("🔑 Extract Keywords"):
 
-        if st.session_state.pipeline is None:
+        with st.spinner("Extracting keywords..."):
+            st.session_state.keywords = pipeline.keywords()
 
-            st.warning("Please upload a PDF first.")
-
-        else:
-
-            with st.spinner("Extracting keywords..."):
-
-                keywords = st.session_state.pipeline.keywords()
+    if st.session_state.keywords:
 
         st.subheader("🔑 Keywords")
+        st.success(st.session_state.keywords)
 
-        st.success(keywords)
+    # -------------------------
+    # Study Notes
+    # -------------------------
 
     if st.button("📘 Generate Study Notes"):
 
-        if st.session_state.pipeline is None:
+        with st.spinner("Generating study notes..."):
+            st.session_state.study_notes = pipeline.study_notes()
 
-            st.warning("Please upload a PDF first.")
-
-        else:
-
-            with st.spinner("Generating study notes..."):
-
-                notes = st.session_state.pipeline.study_notes()
+    if st.session_state.study_notes:
 
         st.subheader("📘 Study Notes")
+        st.markdown(st.session_state.study_notes)
 
-        st.markdown(notes)
+    # -------------------------
+    # Literature Review
+    # -------------------------
 
     if st.button("📚 Generate Literature Review"):
 
-        if st.session_state.pipeline is None:
+        with st.spinner("Generating literature review..."):
+            st.session_state.literature_review = pipeline.literature_review()
 
-            st.warning("Please upload a PDF first.")
-
-        else:
-
-            with st.spinner("Generating literature review..."):
-
-                review = st.session_state.pipeline.literature_review()
+    if st.session_state.literature_review:
 
         st.subheader("📚 Literature Review")
+        st.markdown(st.session_state.literature_review)
 
-        st.markdown(review)
+    # -------------------------
+    # Research Gap
+    # -------------------------
 
     if st.button("🔍 Find Research Gaps"):
 
-        if st.session_state.pipeline is None:
+        with st.spinner("Analyzing research gaps..."):
+            st.session_state.research_gap = pipeline.research_gap()
 
-            st.warning("Please upload a PDF first.")
-
-        else:
-
-            with st.spinner("Analyzing research gaps..."):
-
-                gaps = st.session_state.pipeline.research_gap()
+    if st.session_state.research_gap:
 
         st.subheader("🔍 Research Gap Analysis")
+        st.markdown(st.session_state.research_gap)
 
-        st.markdown(gaps)
-
+    # -------------------------
     # Sidebar Information
+    # -------------------------
 
-    st.sidebar.success("PDF Indexed")
+    st.sidebar.success("✅ PDF Indexed")
 
-    st.sidebar.write(f"**File:** {uploaded_file.name}")
+    if hasattr(pipeline, "filename"):
+        st.sidebar.write(f"**File:** {pipeline.filename}")
+
     st.sidebar.write(f"**Pages:** {pipeline.pages}")
     st.sidebar.write(f"**Chunks:** {len(pipeline.chunks)}")
 
-    # Metrics
+    st.sidebar.divider()
+    st.sidebar.subheader("📊 Workspace Status")
 
-    col1, col2, col3 = st.columns(3)
+    st.sidebar.write(
+        "📖 Summary: " + ("✅" if st.session_state.summary else "❌")
+    )
+
+    st.sidebar.write(
+        "🔑 Keywords: " + ("✅" if st.session_state.keywords else "❌")
+    )
+
+    st.sidebar.write(
+        "📘 Study Notes: " + ("✅" if st.session_state.study_notes else "❌")
+    )
+
+    st.sidebar.write(
+        "📚 Literature Review: "
+        + ("✅" if st.session_state.literature_review else "❌")
+    )
+
+    st.sidebar.write(
+        "🔍 Research Gap: "
+        + ("✅" if st.session_state.research_gap else "❌")
+    )
+
+    # -------------------------
+    # Metrics
+    # -------------------------
+
+    st.subheader("📊 Document Statistics")
+
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric("Pages", pipeline.pages)
+        st.metric("📄 Pages", pipeline.pages)
 
     with col2:
-        st.metric("Chunks", len(pipeline.chunks))
+        st.metric("🧩 Chunks", len(pipeline.chunks))
 
     with col3:
-        st.metric("Words", len(pipeline.text.split()))
+        st.metric("📝 Words", len(pipeline.text.split()))
 
-    # Document Information
-
-    with st.expander("📄 Document Information"):
-
-        st.write(f"**Filename:** {pipeline.filename}")
-        st.write(f"**Pages:** {pipeline.pages}")
-        st.write(f"**Words:** {len(pipeline.text.split())}")
-        st.write(f"**Characters:** {len(pipeline.text)}")
-        st.write(f"**Chunks:** {len(pipeline.chunks)}")
-
+    with col4:
+        st.metric("🔤 Characters", len(pipeline.text))
 # -------------------------
 # Ask Questions
 # -------------------------
 
-question = st.text_input(
-    "Ask a question"
-)
+st.subheader("❓ Ask InsightForge")
+
+question = st.text_input("Ask a question")
 
 if question.strip() == "":
     st.info(
@@ -214,37 +265,37 @@ Try asking:
 
 if st.button("🚀 Ask InsightForge"):
 
-    if st.session_state.pipeline is None:
-
-        st.warning("Please upload a PDF first.")
-
-    elif question.strip() == "":
-
+    if question.strip() == "":
         st.warning("Please enter a question.")
 
     else:
 
         with st.spinner("Generating answer..."):
 
-            answer, sources = st.session_state.pipeline.ask(question)
+            answer, sources = pipeline.ask(question)
 
-        st.markdown("## 🤖 Answer")
+        st.session_state.last_answer = answer
+        st.session_state.last_sources = sources
 
-        st.success(answer)
+        st.session_state.history.append((question, answer))
 
-        # Source Chunks
+# -------------------------
+# Latest Answer
+# -------------------------
 
-        st.subheader("📑 Source Chunks")
+if st.session_state.last_answer:
 
-        for i, source in enumerate(sources):
+    st.markdown("## 🤖 Latest Answer")
 
-            with st.expander(f"Chunk {i+1}"):
+    st.success(st.session_state.last_answer)
 
-                st.write(source)
+    st.subheader("📑 Source Chunks")
 
-        st.session_state.history.append(
-            (question, answer)
-        )
+    for i, source in enumerate(st.session_state.last_sources):
+
+        with st.expander(f"Chunk {i + 1}"):
+
+            st.write(source)
 
 # -------------------------
 # Chat History
